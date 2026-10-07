@@ -1,39 +1,51 @@
 # AGENTS.md
 
-Dokumen ini adalah panduan untuk AI coding agent (misalnya Claude Code, Cursor, Devin, Agentic Tools) yang bekerja pada repository **Connect** (atau `Joints-backend`). Baca dokumen ini sebelum membuat, mengubah, atau menghapus kode apa pun.
+Dokumen ini adalah panduan untuk AI coding agent (misalnya Claude Code, Cursor, Devin, Agentic Tools) yang bekerja pada repository **Connect** (atau `Joints-backend`).
+
+> **Penting:** Baca dokumen ini sebelum membuat, mengubah, atau menghapus kode apa pun.
 
 ---
 
 ## 1. Ringkasan Proyek
 
-Connect adalah backend aplikasi yang menjembatani pasien fisioterapi mandiri di rumah dengan tenaga kesehatan (nakes). Fitur utamanya mencakup autentikasi dua role (`PATIENT` & `NAKES`), pendeteksi gerakan berbasis data gyroscope, jadwal obat/terapi, riwayat terapi, catatan nakes, dan AI chatbot penjembatan keluhan pasien ke nakes.
+**Connect** adalah backend aplikasi yang menjembatani pasien fisioterapi mandiri di rumah dengan tenaga kesehatan (Nakes).
 
-Rujukan lengkap kebutuhan produk ada di `PRD.md` di root repo — baca file tersebut terlebih dahulu untuk memahami konteks domain & bisnis.
+Fitur utama meliputi:
+
+* Autentikasi dengan dua role: `PATIENT` dan `NAKES`
+* Pendeteksi gerakan berbasis data gyroscope
+* Jadwal obat dan terapi
+* Riwayat terapi
+* Catatan Nakes
+* AI chatbot sebagai penjembatan keluhan pasien kepada Nakes
+
+Rujukan lengkap mengenai kebutuhan produk tersedia di `PRD.md` pada root repository. **Baca file tersebut terlebih dahulu** untuk memahami konteks domain dan bisnis sebelum mengerjakan fitur apa pun.
 
 ---
 
 ## 2. Tech Stack Core
 
-| Layer | Teknologi |
-|---|---|
-| Runtime | Node.js (v18+) |
-| Language | TypeScript |
-| Framework | Express.js |
-| ORM | Prisma ORM |
-| Database | PostgreSQL |
-| Validation | Zod |
-| Auth | JWT (`jsonwebtoken`) & Password Hashing (`bcrypt` / `argon2`) |
+| Layer          | Teknologi                                                            |
+| -------------- | -------------------------------------------------------------------- |
+| Runtime        | Node.js (v18+)                                                       |
+| Language       | TypeScript                                                           |
+| Framework      | Express.js                                                           |
+| ORM            | Prisma ORM                                                           |
+| Database       | PostgreSQL                                                           |
+| Validation     | Zod                                                                  |
+| Auth           | JWT (`jsonwebtoken`) & Password Hashing (`bcrypt` / `argon2`)        |
 | AI Integration | Google Generative AI SDK (`@google/genai` / `@google/generative-ai`) |
-| Testing | Jest / Vitest + Supertest |
+| Testing        | Jest / Vitest + Supertest                                            |
 
-⚠️ **Aturan Ketat:** Jangan mengganti, menambah, atau mengurangi pustaka inti di atas tanpa izin eksplisit dari pengguna, meskipun AI menganggap ada alternatif lain yang "lebih baik".
+> **⚠️ Aturan ketat:** Jangan mengganti, menambah, atau mengurangi pustaka inti di atas tanpa izin eksplisit dari pengguna, meskipun AI menganggap terdapat alternatif yang lebih baik.
 
 ---
 
 ## 3. Struktur Folder Repository
 
-Repository ini menggunakan struktur modular layered yang presisi. AI wajib menempatkan kode baru sesuai dengan lokasi yang sudah ditentukan di bawah ini:
+Repository menggunakan struktur modular layered yang presisi. AI wajib menempatkan kode baru sesuai dengan lokasi yang telah ditentukan berikut:
 
+```text
 .
 ├── prisma/
 │   └── schema.prisma         # Definisi Prisma Schema & DB Migration setup
@@ -52,88 +64,358 @@ Repository ini menggunakan struktur modular layered yang presisi. AI wajib menem
 ├── package.json
 ├── PRD.md                    # Product Requirements Document
 └── tsconfig.json
+```
 
+### Aturan Penempatan Kode
 
-### Aturan Penempatan Kode:
-- **Routes (`src/routes/`)**: Tempat mendaftarkan endpoint HTTP. Router memanggil middleware validation/auth lalu mengarah ke controller. Jangan buat logika bisnis di sini.
-- **Controllers (`src/controllers/`)**: Menangani `req: Request` dan `res: Response`. Mengambil input, memanggil service yang sesuai, lalu memberikan response HTTP. Jangan langsung melakukan query Prisma di controller.
-- **Services (`src/services/`)**: Tempat SELURUH logika bisnis, pemrosesan data gyroscope, panggilan ke Gemini AI, dan query database melalui Prisma Client (`src/prisma/`).
-- **Middleware (`src/middleware/`)**: Tempat middleware pengecekan JWT token, validasi Zod schema, middleware penanganan error global, dan RBAC (Role-Based Access Control).
-- **Prisma (`src/prisma/`)**: Tempat instance Prisma Client di-export agar reuseable dan tidak terjadi koneksi ganda (*connection leak*).
-- **Utils (`src/utils/`)**: Fungsi pembantu serbaguna (seperti JWT sign/verify helper, hash password, custom API Response formatter).
+#### `src/routes/`
+
+Tempat mendaftarkan endpoint HTTP.
+
+* Router memanggil middleware validation/auth.
+* Router mengarahkan request ke controller.
+* **Jangan menempatkan logika bisnis di sini.**
+
+#### `src/controllers/`
+
+Menangani `req: Request` dan `res: Response`.
+
+Controller bertugas untuk:
+
+1. Mengambil input dari request.
+2. Memanggil service yang sesuai.
+3. Mengembalikan HTTP response.
+
+> **Jangan melakukan query Prisma secara langsung di controller.**
+
+#### `src/services/`
+
+Tempat **seluruh logika bisnis**, termasuk:
+
+* Pemrosesan data gyroscope.
+* Integrasi dengan Gemini AI.
+* Query database melalui Prisma Client (`src/prisma/`).
+* Kalkulasi dan pemrosesan data lainnya.
+
+#### `src/middleware/`
+
+Tempat middleware untuk:
+
+* Pengecekan JWT token.
+* Validasi menggunakan Zod.
+* Penanganan error global.
+* RBAC (Role-Based Access Control).
+
+#### `src/prisma/`
+
+Tempat instance Prisma Client yang di-export agar dapat digunakan kembali dan mencegah koneksi database ganda (*connection leak*).
+
+#### `src/utils/`
+
+Berisi fungsi pembantu serbaguna, seperti:
+
+* JWT sign/verify helper.
+* Password hashing.
+* Custom API response formatter.
+* Helper umum lainnya.
 
 ---
 
 ## 4. Perintah yang Sering Dipakai
 
+### Development Server
+
+Menjalankan server dalam mode development:
+
 ```bash
-# Jalankan server development
 npm run dev
+```
 
-# Format Prisma Schema / Generate Client
+### Prisma Generate
+
+Memformat schema dan menghasilkan Prisma Client:
+
+```bash
 npx prisma generate
+```
 
-# Jalankan migrasi database di lokal
+### Prisma Migration
+
+Menjalankan migrasi database pada environment lokal:
+
+```bash
 npx prisma migrate dev --name <deskripsi_migrasi>
+```
 
-# Buka Prisma Studio (Database GUI)
+### Prisma Studio
+
+Membuka Prisma Studio sebagai database GUI:
+
+```bash
 npx prisma studio
+```
 
-# Build TypeScript ke JavaScript (/dist)
+### Build
+
+Melakukan build TypeScript ke JavaScript (`/dist`):
+
+```bash
 npm run build
+```
 
-# Jalankan seluruh test
+### Test
+
+Menjalankan seluruh test:
+
+```bash
 npm test
+```
 
-Setelah mengubah file prisma/schema.prisma, AI wajib mengeksekusi npx prisma generate dan/atau npx prisma migrate dev agar Prisma Client & TypeScript types tetap sinkron dengan database.
-5. Konvensi Kode & Standar TypeScript
+> **Penting:** Setelah mengubah `prisma/schema.prisma`, AI wajib menjalankan `npx prisma generate` dan/atau `npx prisma migrate dev` sesuai kebutuhan agar Prisma Client dan TypeScript types tetap sinkron dengan database.
 
-    Gunakan Strict Mode TypeScript. Hindari penggunaan tipe any! Selalu definisikan interface atau type dengan jelas.
+---
 
-    Penamaan file dan folder menggunakan camelCase atau kebab-case secara konsisten (contoh: authController.ts atau auth.controller.ts, sesuaikan dengan file yang sudah ada).
+## 5. Konvensi Kode & Standar TypeScript
 
-    Gunakan Zod untuk validasi req.body, req.params, dan req.query sebelum masuk ke controller/service.
+### TypeScript
 
-    Semua controller async wajib dibungkus dengan try-catch atau dipasangkan dengan asyncHandler middleware agar tidak terjadi unhandled promise rejection.
+* Gunakan **Strict Mode** TypeScript.
+* Hindari penggunaan tipe `any`.
+* Selalu definisikan `interface` atau `type` dengan jelas.
 
-    Tanggapan API (API Response) harus konsisten menggunakan struktur utilitas penyeragaman response (misal: { success: true, data: ..., message: ... }).
+### Penamaan File
 
-6. Hak Akses & Keamanan Role (PATIENT vs NAKES)
+Gunakan `camelCase` atau `kebab-case` secara konsisten sesuai pola yang sudah digunakan di repository.
 
-    Terdapat dua role utama: PATIENT dan NAKES.
+Contoh:
 
-    Semua endpoint privat wajib menggunakan middleware autentikasi JWT dan pengecekan role yang jelas.
+```text
+authController.ts
+```
 
-    Dilarang keras: Pasien dapat membaca/mengubah data milik pasien lain, atau pasien menulis catatan/resep yang seharusnya hanya dimiliki oleh role Nakes.
+atau:
 
-7. Batasan Domain Kesehatan & AI (Sangat Penting)
+```text
+auth.controller.ts
+```
 
-    AI Chatbot Tidak Boleh Memberikan Diagnosis Medis Direct: System prompt Gemini API pada src/services/ wajib mengunci batasan AI hanya untuk menggali informasi keluhan pasien dan membuat ringkasan terstruktur untuk Nakes. AI dilarang menyimpulkan diagnosis penyakit atau meresepkan obat. Jangan pernah melemahkan prompt ini!
+### Validasi Input
 
-    Data Gyroscope Adalah Estimasi: Response API atau komentar kode seputar data sudut gyroscope wajib memperlakukan nilai tersebut sebagai estimasi pergerakan, bukan pengukuran medis resmi goniometer.
+Gunakan **Zod** untuk melakukan validasi terhadap:
 
-    Kontrol Resep Khusus Nakes: Resep gerakan terapi, durasi, target sudut, dan dosis obat hanya bisa dibuat atau diubah oleh Nakes.
+* `req.body`
+* `req.params`
+* `req.query`
 
-8. Penanganan Data Sensitif & Secret
+Validasi harus dilakukan sebelum data diteruskan ke controller atau service.
 
-    Jangan pernah menyisipkan API Key (Gemini, Database URL, JWT Secret) langsung di dalam file kode (hardcoded). Wajib dibaca dari process.env.
+### Error Handling
 
-    File .env tidak boleh di-commit.
+Semua controller async wajib:
 
-    Password wajib di-hash menggunakan bcrypt / argon2 sebelum dimasukkan ke database via Prisma.
+* Dibungkus dengan `try-catch`, atau
+* Menggunakan `asyncHandler` middleware.
 
-    Data rekam medis pasien (riwayat terapi, percakapan AI, catatan medis) bersifat rahasia. Dilarang mencetak (console.log) payload data kesehatan penuh ke dalam server log.
+Tujuannya adalah mencegah *unhandled promise rejection*.
 
-9. Hal yang Tidak Boleh Dilakukan AI Agent Tanpa Konfirmasi Pengguna
+### API Response
 
-    Mengubah struktur prisma/schema.prisma yang berdampak pada tabel lain tanpa menjelaskan breaking changes-nya.
+Semua response API harus menggunakan struktur response yang konsisten melalui utility formatter.
 
-    Menginstall library/dependency npm baru di luar yang sudah disepakati.
+Contoh:
 
-    Menghapus file migrasi lama di folder prisma/migrations/.
+```json
+{
+  "success": true,
+  "data": {},
+  "message": "Request berhasil diproses"
+}
+```
 
-    Melemahkan instruksi/system prompt guardrail AI pada fitur chatbot.
+---
 
-    Melakukan push langsung ke branch main atau production.
+## 6. Hak Akses & Keamanan Role (`PATIENT` vs `NAKES`)
 
-Dokumen ini bersifat dinamis. Perbarui jika ada perubahan konvensi arsitektur yang disepakati oleh tim.
+Terdapat dua role utama:
+
+* `PATIENT`
+* `NAKES`
+
+### Aturan Endpoint
+
+Semua endpoint privat wajib menggunakan:
+
+1. Middleware autentikasi JWT.
+2. Pengecekan role yang sesuai jika endpoint memiliki batasan role.
+
+### Aturan Akses Data
+
+**Dilarang keras** bagi pasien untuk:
+
+* Membaca data milik pasien lain.
+* Mengubah data milik pasien lain.
+* Menulis atau mengubah catatan Nakes.
+* Membuat atau mengubah resep terapi maupun obat yang hanya boleh dikelola oleh Nakes.
+
+Setiap akses terhadap data pasien harus memastikan bahwa pengguna memiliki hak akses terhadap data tersebut.
+
+---
+
+## 7. Batasan Domain Kesehatan & AI
+
+> **⚠️ Bagian ini sangat penting dan tidak boleh dilemahkan.**
+
+### AI Chatbot Tidak Boleh Memberikan Diagnosis Medis
+
+System prompt Gemini API yang digunakan pada `src/services/` wajib membatasi AI hanya untuk:
+
+* Menggali informasi mengenai keluhan pasien.
+* Membantu pasien menyampaikan keluhan secara lebih terstruktur.
+* Membuat ringkasan terstruktur untuk Nakes.
+
+AI **dilarang**:
+
+* Menyimpulkan diagnosis penyakit.
+* Memberikan diagnosis medis.
+* Meresepkan obat.
+* Mengubah atau menentukan terapi medis.
+
+**Jangan pernah melemahkan system prompt atau guardrail ini.**
+
+### Data Gyroscope Adalah Estimasi
+
+Data sudut atau pergerakan yang diperoleh dari gyroscope merupakan **estimasi pergerakan**, bukan pengukuran medis resmi menggunakan goniometer.
+
+Response API dan komentar kode yang berkaitan dengan data tersebut wajib menggunakan konteks ini.
+
+Hindari memberikan kesan bahwa hasil gyroscope merupakan:
+
+* Diagnosis medis.
+* Pengukuran klinis resmi.
+* Pengganti pemeriksaan tenaga kesehatan.
+
+### Kontrol Resep Hanya untuk Nakes
+
+Data berikut hanya boleh dibuat atau diubah oleh role `NAKES`:
+
+* Resep gerakan terapi.
+* Durasi terapi.
+* Target sudut gerakan.
+* Dosis obat.
+* Instruksi terapi lainnya yang bersifat medis.
+
+---
+
+## 8. Penanganan Data Sensitif & Secret
+
+### Environment Variables
+
+Jangan pernah menuliskan secret secara langsung (*hardcoded*) di dalam source code.
+
+Secret seperti berikut wajib dibaca melalui `process.env`:
+
+* Gemini API Key.
+* Database URL.
+* JWT Secret.
+* Credential atau secret lainnya.
+
+Contoh:
+
+```typescript
+const jwtSecret = process.env.JWT_SECRET;
+```
+
+### File `.env`
+
+File `.env` **tidak boleh di-commit** ke repository.
+
+Pastikan `.env` tercantum dalam `.gitignore`.
+
+### Password
+
+Password wajib di-hash menggunakan `bcrypt` atau `argon2` sebelum disimpan ke database melalui Prisma.
+
+Password **tidak boleh disimpan dalam bentuk plaintext**.
+
+### Data Kesehatan
+
+Data berikut merupakan data sensitif dan harus diperlakukan sebagai data rahasia:
+
+* Riwayat terapi pasien.
+* Percakapan AI.
+* Catatan medis.
+* Data keluhan pasien.
+* Data kesehatan lainnya.
+
+**Dilarang mencetak payload data kesehatan secara penuh menggunakan `console.log` atau server log lainnya.**
+
+Jika logging diperlukan untuk debugging, hanya log informasi minimum yang tidak mengekspos data kesehatan sensitif.
+
+---
+
+## 9. Hal yang Tidak Boleh Dilakukan AI Agent Tanpa Konfirmasi Pengguna
+
+AI Agent **wajib meminta konfirmasi pengguna terlebih dahulu** sebelum melakukan hal-hal berikut:
+
+### 1. Mengubah Prisma Schema
+
+Jangan mengubah struktur `prisma/schema.prisma` jika perubahan tersebut berdampak pada tabel atau relasi lain tanpa menjelaskan terlebih dahulu:
+
+* Perubahan schema yang akan dilakukan.
+* Dampak terhadap tabel atau relasi yang sudah ada.
+* Potensi breaking changes.
+* Dampak terhadap migration.
+
+### 2. Menginstall Dependency Baru
+
+Jangan menginstall library atau dependency npm baru di luar dependency yang telah disepakati tanpa izin eksplisit pengguna.
+
+### 3. Menghapus Migration Lama
+
+Jangan menghapus file migration lama dari:
+
+```text
+prisma/migrations/
+```
+
+Migration yang sudah ada harus dianggap sebagai bagian dari histori database dan tidak boleh dihapus sembarangan.
+
+### 4. Melemahkan AI Guardrail
+
+Jangan mengurangi, menghapus, atau melemahkan instruksi/system prompt guardrail AI pada fitur chatbot.
+
+### 5. Push ke Main atau Production
+
+Jangan melakukan push secara langsung ke:
+
+* Branch `main`
+* Environment production
+
+tanpa konfirmasi eksplisit dari pengguna.
+
+---
+
+## 10. Prinsip Umum untuk AI Agent
+
+Saat mengerjakan repository ini, AI Agent harus mengikuti prinsip berikut:
+
+1. **Baca `AGENTS.md` dan `PRD.md` terlebih dahulu.**
+2. Pahami struktur arsitektur sebelum membuat file baru.
+3. Ikuti separation of concerns antara route, controller, service, middleware, dan utility.
+4. Jangan menambahkan dependency tanpa izin.
+5. Prioritaskan keamanan data pasien.
+6. Jangan menganggap data gyroscope sebagai data medis resmi.
+7. Jangan memberikan diagnosis atau resep melalui AI chatbot.
+8. Pastikan setiap endpoint memiliki validasi input yang sesuai.
+9. Pastikan endpoint privat memiliki autentikasi dan authorization yang benar.
+10. Jangan melakukan perubahan database yang berisiko tanpa menjelaskan dampaknya terlebih dahulu.
+11. Jangan melakukan operasi Git yang bersifat irreversible atau berdampak ke production tanpa konfirmasi.
+12. Jika terdapat konflik antara implementasi dan aturan dalam dokumen ini, **ikuti aturan dalam `AGENTS.md` dan tanyakan kepada pengguna jika diperlukan.**
+
+---
+
+## 11. Pemeliharaan Dokumen
+
+Dokumen ini bersifat **dinamis**.
+
+Jika terdapat perubahan arsitektur, konvensi kode, teknologi, aturan keamanan, atau keputusan teknis yang telah disepakati oleh tim, `AGENTS.md` harus diperbarui agar tetap menjadi sumber kebenaran (*source of truth*) bagi AI Agent yang bekerja pada repository.

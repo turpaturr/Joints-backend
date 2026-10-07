@@ -115,17 +115,24 @@ Connect adalah aplikasi yang menjembatani pasien fisioterapi mandiri di rumah de
 Untuk menjaga pemisahan logika (*separation of concerns*) agar *codebase* mudah di-maintain, di-test, dan di-scale, arsitektur backend Express.js dibagi menjadi beberapa *layer*:
 
 ```text
-src/
-├── @types/             # Custom TypeScript type definitions
-├── config/             # Environment variables & third-party configs (Prisma, Gemini)
-├── controllers/        # Express Request & Response handling (HTTP Layer)
-├── services/           # Business Logic Layer (Pemrosesan data, integrasi AI)
-├── repositories/       # Data Access Layer (Akses database via Prisma Client)
-├── middlewares/        # Express Middlewares (Auth JWT, Role RBAC, Validation, Error Handling)
-├── routes/             # API Endpoint Routing definitions
-├── schemas/            # Zod validation schemas
-├── utils/              # Helper functions, custom errors, loggers
-└── app.ts              # Express App setup & Server initialization
+.
+├── prisma/
+│   └── schema.prisma         # Definisi Prisma Schema & DB Migration setup
+├── src/
+│   ├── controllers/          # Express Request & Response handling (HTTP Layer)
+│   ├── middleware/           # Express Middlewares (Auth JWT, Role Guard, Error Handler, Validation)
+│   ├── prisma/               # Prisma Client instance/singleton (client.ts atau index.ts)
+│   ├── routes/               # Express Routes (API Endpoint Routing definitions)
+│   ├── services/             # Business Logic Layer & Integrasi External (Gemini AI, kalkulasi data)
+│   ├── utils/                # Helper functions, custom error classes, response formatters, loggers
+│   ├── app.ts                # Express app configuration & middleware binding
+│   └── server.ts             # Entry point untuk menjalankan server (listen port)
+├── .env                      # TIDAK PERNAH di-commit
+├── .gitignore
+├── AGENTS.md                 # Dokumentasi panduan AI Agent ini
+├── package.json
+├── PRD.md                    # Product Requirements Document
+└── tsconfig.json
 ```
 
 #### Deskripsi Peran Setiap Layer:
