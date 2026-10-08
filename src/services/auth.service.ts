@@ -2,7 +2,7 @@ import { prisma } from '../prisma';
 import bcrypt from 'bcrypt';
 import { generateToken } from '../utils/jwt.util';
 import { z } from 'zod';
-import { registerSchema, loginSchema } from '../utils/validators';
+import { registerSchema, loginSchema } from '../utils/validations/auth.validation';
 
 export const registerUser = async (data: z.infer<typeof registerSchema>) => {
   const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
