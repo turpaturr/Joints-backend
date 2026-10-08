@@ -1,4 +1,4 @@
-import { prisma } from '../prisma';
+import { prisma } from '../prisma'; 
 import bcrypt from 'bcrypt';
 import { generateToken } from '../utils/jwt.util';
 import { z } from 'zod';
@@ -15,8 +15,8 @@ export const registerUser = async (data: z.infer<typeof registerSchema>) => {
       email: data.email,
       password: hashedPassword,
       role: data.role,
-      patientProfile: data.role === 'PATIENT' ? { create: {} } : undefined,
-      nakesProfile: data.role === 'NAKES' ? { create: {} } : undefined,
+      patientProfile: data.role === 'PATIENT' ? { create: { namaLengkap: data.namaLengkap } } : undefined,
+      nakesProfile: data.role === 'NAKES' ? { create: { namaLengkap: data.namaLengkap } } : undefined,
     },
     select: { id: true, email: true, role: true, createdAt: true }
   });

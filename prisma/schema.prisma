@@ -12,13 +12,20 @@ enum Role {
   NAKES
 }
 
+// Enum tambahan untuk jenis kelamin
+enum JenisKelamin {
+  LAKI_LAKI
+  PEREMPUAN
+}
+
 model User {
-  id             String          @id @default(uuid())
-  email          String          @unique
-  password       String
-  role           Role
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   patientProfile PatientProfile?
   nakesProfile   NakesProfile?
 }
@@ -27,12 +34,32 @@ model PatientProfile {
   id     String @id @default(uuid())
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // Field tambahan profil pasien
+
+  // Data Profil Pasien
+  namaLengkap  String
+  tanggalLahir DateTime?
+  jenisKelamin JenisKelamin?
+  nomorTelepon String?
+  alamat       String?
+  kondisiMedis String?
+  catatanAwal  String?
+
+  // Relasi: Nakes yang bertanggung jawab
+  nakesId String?
+  nakes   NakesProfile? @relation(fields: [nakesId], references: [id])
 }
 
 model NakesProfile {
   id     String @id @default(uuid())
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // Field tambahan profil nakes
+
+  // Data Profil Nakes
+  namaLengkap  String
+  spesialisasi String?
+  nomorRegis   String?
+  faskes       String?
+  nomorTelepon String?
+
+  pasien PatientProfile[]
 }
