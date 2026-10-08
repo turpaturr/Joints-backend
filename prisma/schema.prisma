@@ -86,7 +86,6 @@ model TherapyPrescription {
   movementId       String
   movement         TherapyMovement @relation(fields: [movementId], references: [id])
 
-  targetSudut      Int?     
   targetRepetisi   Int
   frekuensiPerHari Int
   tanggalMulai     DateTime

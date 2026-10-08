@@ -21,12 +21,21 @@ export const listMovements = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-  export const addPrescription = async (req: Request, res: Response, next: NextFunction) => {
+export const addPrescription = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const validatedData = prescriptionSchema.parse(req.body);
-    const nakesId = (req as any).user.id;
-
-    const prescription = await therapyService.createPrescription(nakesId, validatedData);
+    const user = (req as any).user;
+    console.log("Isi token JWT:", user);
+    const userId = user?.id || user?.userId || user?.penggunaId;
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "ID tidak ditemukan di dalam token JWT",
+        error: { code: "INVALID_TOKEN_PAYLOAD" }
+      });
+    }
+    const prescription = await therapyService.createPrescription(userId, validatedData);
+    
     res.status(201).json({ success: true, message: "Resep berhasil dibuat", data: prescription });
   } catch (error) {
     next(error);

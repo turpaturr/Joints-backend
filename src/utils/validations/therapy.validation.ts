@@ -11,7 +11,6 @@ export const movementSchema = z.object({
 export const prescriptionSchema = z.object({
   patientId: z.string().uuid("ID Pasien tidak valid"),
   movementId: z.string().uuid("ID Gerakan tidak valid"),
-  targetSudut: z.number().optional(),
   targetRepetisi: z.number().min(1, "Target repetisi minimal 1"),
   frekuensiPerHari: z.number().min(1, "Frekuensi minimal 1"),
   tanggalMulai: z.string().datetime(),
