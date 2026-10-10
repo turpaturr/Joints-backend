@@ -11,4 +11,11 @@ router.post(
   therapySessionController.createTherapySession,
 );
 
+router.get(
+  '/patient/:patientId',
+  requireAuth,
+  requireRole(['NAKES']),
+  therapySessionController.listPatientTherapySessions,
+);
+
 export default router;

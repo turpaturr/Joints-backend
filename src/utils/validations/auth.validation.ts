@@ -11,3 +11,8 @@ export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string()
 });
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Password saat ini wajib diisi'),
+  newPassword: z.string().min(6, 'Password baru minimal 6 karakter'),
+});

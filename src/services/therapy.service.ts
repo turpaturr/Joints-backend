@@ -34,6 +34,50 @@ export const getPrescriptionsByPatient = async (patientId: string) => {
   });
 };
 
+export const getPatientsByNakes = async (userId: string) => {
+  const nakes = await prisma.nakesProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!nakes) return null;
+
+  return prisma.patientProfile.findMany({
+    where: { nakesId: nakes.id },
+    include: {
+      user: { select: { id: true, email: true } },
+      _count: { select: { therapySessions: true } },
+    },
+    orderBy: { namaLengkap: 'asc' },
+  });
+};
+
+export const getTherapySessionsByPatientAndNakes = async (
+  userId: string,
+  patientId: string,
+) => {
+  const nakes = await prisma.nakesProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!nakes) return null;
+
+  const patient = await prisma.patientProfile.findFirst({
+    where: { id: patientId, nakesId: nakes.id },
+    select: { id: true },
+  });
+  if (!patient) return null;
+
+  return prisma.therapySession.findMany({
+    where: { patientId: patient.id },
+    include: {
+      prescription: {
+        include: { movement: true },
+      },
+    },
+    orderBy: { performedAt: 'desc' },
+  });
+};
+
 export const deletePrescription = async (id: string) => {
   return await prisma.therapyPrescription.delete({ where: { id } });
 };

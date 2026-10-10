@@ -6,6 +6,7 @@ const router = Router();
 
 router.use(requireAuth, requireRole(['NAKES', 'PATIENT']));
 
+router.get('/patients', requireRole(['NAKES']), therapyController.listNakesPatients);
 router.post('/movements', requireRole(['NAKES']), therapyController.addMovement);
 router.get('/movements', requireRole(['NAKES', 'PATIENT']), therapyController.listMovements);
 router.post('/prescriptions', requireRole(['NAKES']), therapyController.addPrescription);

@@ -51,3 +51,33 @@ export const getPatientPrescriptions = async (req: Request, res: Response, next:
     next(error);
   }
 };
+
+export const listNakesPatients = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user?.userId;
+    if (typeof userId !== 'string') {
+      return res.status(401).json({
+        success: false,
+        message: 'ID pengguna tidak ditemukan di token JWT',
+        error: { code: 'INVALID_TOKEN_PAYLOAD' },
+      });
+    }
+
+    const patients = await therapyService.getPatientsByNakes(userId);
+    if (!patients) {
+      return res.status(404).json({
+        success: false,
+        message: 'Profil nakes tidak ditemukan',
+        error: { code: 'NAKES_PROFILE_NOT_FOUND' },
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Daftar pasien nakes',
+      data: patients,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

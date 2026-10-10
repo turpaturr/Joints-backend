@@ -47,3 +47,41 @@ export const createTherapySession = async (
     next(error);
   }
 };
+
+export const listPatientTherapySessions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = (req as any).user?.userId;
+    const patientId = req.params.patientId as string;
+    if (typeof userId !== 'string') {
+      return res.status(401).json({
+        success: false,
+        message: 'ID pengguna tidak ditemukan di token',
+        error: { code: 'INVALID_TOKEN_PAYLOAD' },
+      });
+    }
+
+    const sessions = await therapyService.getTherapySessionsByPatientAndNakes(
+      userId,
+      patientId,
+    );
+    if (!sessions) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pasien tidak ditemukan atau bukan pasien nakes ini',
+        error: { code: 'PATIENT_NOT_FOUND' },
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Riwayat sesi terapi pasien',
+      data: sessions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
