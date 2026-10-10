@@ -3,8 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 
-// 1. Impor authRoutes
 import authRoutes from './routes/auth.routes';
+import therapyRoutes from './routes/therapy.routes';
 
 const app: Application = express();
 
@@ -19,7 +19,7 @@ app.get('/health', (_req: Request, res: Response) => {
 });
 
 app.use('/api/auth', authRoutes);
-
+app.use('/api/therapy', therapyRoutes);
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Not Found' });
 });

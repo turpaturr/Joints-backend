@@ -63,3 +63,34 @@ model NakesProfile {
 
   pasien PatientProfile[]
 }
+
+model TherapyMovement {
+  id          String   @id @default(uuid())
+  namaGerakan String
+  deskripsi   String?
+  instruksi   String   @db.Text
+  mediaUrl    String?  // URL video atau gambar
+  mediaType   String?  // "VIDEO" atau "IMAGE"
+  
+  prescriptions TherapyPrescription[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TherapyPrescription {
+  id               String   @id @default(uuid())
+  patientId        String
+  nakesId          String
+  
+  movementId       String
+  movement         TherapyMovement @relation(fields: [movementId], references: [id])
+
+  targetRepetisi   Int
+  frekuensiPerHari Int
+  tanggalMulai     DateTime
+  tanggalBerakhir  DateTime
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
