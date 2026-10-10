@@ -362,6 +362,32 @@ Contoh struktur:
 
 Endpoint final dapat berkembang mengikuti implementasi backend.
 
+### Membuat Sesi Terapi
+
+`POST /api/therapy-sessions` membutuhkan JWT dengan role `PATIENT`. Identitas pasien
+diambil dari JWT; client tidak mengirim `patientId`. Jika `prescriptionId` disertakan,
+resep harus dimiliki pasien tersebut.
+
+```json
+{
+  "programName": "Latihan Lutut",
+  "estimatedAngle": 32.5,
+  "validRepetitions": 3,
+  "durationMs": 120000,
+  "sampleCount": 1200,
+  "performedAt": "2026-10-10T08:00:00.000Z"
+}
+```
+
+Sudut dan repetisi merupakan estimasi generik dari data gyroscope, bukan pengukuran
+medis. Implementasi saat ini mengintegrasikan laju rotasi (rad/s), memilih sumbu
+dengan rentang gerak terbesar, dan menghitung satu repetisi ketika sudut melewati
+30° lalu kembali ke dalam 10° dari posisi awal. Jeda sampel di atas 500 ms tidak
+diintegrasikan. Ambang ini bukan target medis dan perlu dikalibrasi terhadap gerakan
+serta resep yang sebenarnya. `prescriptionId` bersifat opsional jika sesi tidak
+dijalankan dari resep yang telah dimuat oleh aplikasi. Jika resep disertakan,
+nilainya harus berupa UUID resep milik pasien.
+
 ### Prinsip API
 
 - Semua endpoint menerima dan mengembalikan JSON.
