@@ -5,6 +5,7 @@ import morgan from 'morgan';
 
 import authRoutes from './routes/auth.routes';
 import therapyRoutes from './routes/therapy.routes';
+import medicationRoutes from './routes/medication.routes';
 
 const app: Application = express();
 
@@ -20,6 +21,7 @@ app.get('/health', (_req: Request, res: Response) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/therapy', therapyRoutes);
+app.use('/api/medications', medicationRoutes);
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Not Found' });
 });
