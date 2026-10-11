@@ -16,7 +16,7 @@ async function main() {
 
   const dummyPassword = await bcrypt.hash('password123', 10);
 
-  const nakesUser = await prisma.user.create({
+  await prisma.user.create({
     data: {
       email: 'dr.budi@connect.com',
       password: dummyPassword,
@@ -30,9 +30,6 @@ async function main() {
           nomorTelepon: '081234567890',
         }
       }
-    },
-    include: {
-      nakesProfile: true
     }
   });
 
@@ -50,7 +47,6 @@ async function main() {
           alamat: 'Balikpapan, Kalimantan Timur',
           kondisiMedis: 'Pemulihan pasca cedera pergelangan kaki',
           catatanAwal: 'Pasien kooperatif, perlu penguatan otot ankle.',
-          nakesId: nakesUser.nakesProfile?.id 
         }
       }
     },
@@ -73,7 +69,6 @@ async function main() {
           alamat: 'Balikpapan, Kalimantan Timur',
           kondisiMedis: 'Pemulihan pasca cedera pergelangan kaki',
           catatanAwal: 'Pasien kooperatif, perlu penguatan otot ankle.',
-          nakesId: nakesUser.nakesProfile?.id 
         }
       }
     },
