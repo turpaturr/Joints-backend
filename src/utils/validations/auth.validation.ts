@@ -8,9 +8,12 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string()
-});
+  email: z.string().trim().email('Format email tidak valid'),
+  password: z.string().min(1, 'Password wajib diisi'),
+  platform: z.enum(['WEB', 'ANDROID'], {
+    message: 'Platform harus WEB atau ANDROID',
+  }),
+}).strict();
 
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Password saat ini wajib diisi'),

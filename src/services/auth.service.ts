@@ -4,6 +4,16 @@ import { generateToken } from '../utils/jwt.util';
 import { z } from 'zod';
 import { changePasswordSchema, registerSchema, loginSchema } from '../utils/validations/auth.validation';
 
+export class AuthServiceError extends Error {
+  constructor(
+    public readonly code: 'INVALID_CREDENTIALS' | 'PLATFORM_FORBIDDEN',
+    message: string,
+  ) {
+    super(message);
+    this.name = 'AuthServiceError';
+  }
+}
+
 export const registerUser = async (data: z.infer<typeof registerSchema>) => {
   const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
   if (existingUser) throw new Error('Email sudah terdaftar');
@@ -24,10 +34,24 @@ export const registerUser = async (data: z.infer<typeof registerSchema>) => {
 
 export const loginUser = async (data: z.infer<typeof loginSchema>) => {
   const user = await prisma.user.findUnique({ where: { email: data.email } });
-  if (!user) throw new Error('Kredensial tidak valid');
+  if (!user) {
+    throw new AuthServiceError('INVALID_CREDENTIALS', 'Kredensial tidak valid');
+  }
 
   const isValidPassword = await bcrypt.compare(data.password, user.password);
-  if (!isValidPassword) throw new Error('Kredensial tidak valid');
+  if (!isValidPassword) {
+    throw new AuthServiceError('INVALID_CREDENTIALS', 'Kredensial tidak valid');
+  }
+
+  const canLogin =
+    (user.role === 'NAKES' && data.platform === 'WEB') ||
+    (user.role === 'PATIENT' && data.platform === 'ANDROID');
+  if (!canLogin) {
+    throw new AuthServiceError(
+      'PLATFORM_FORBIDDEN',
+      'Role akun tidak diizinkan login melalui platform ini',
+    );
+  }
 
   const token = generateToken(user.id, user.role);
   return { user: { id: user.id, email: user.email, role: user.role }, token };

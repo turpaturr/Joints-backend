@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { ZodError } from 'zod';
 import * as authService from '../services/auth.service';
 import { changePasswordSchema, registerSchema, loginSchema } from '../utils/validations/auth.validation';
 
@@ -19,13 +20,37 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const validatedData = loginSchema.parse(req.body);
     const result = await authService.loginUser(validatedData);
-    res.status(200).json({ success: true, message: 'Login berhasil', data: result });
-  } catch (error: any) {
-    res.status(401).json({ success: false, message: error.message, error: { code: 'UNAUTHORIZED' } });
+    return res.status(200).json({ success: true, message: 'Login berhasil', data: result });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: 'Data login tidak valid',
+        error: {
+          code: 'VALIDATION_ERROR',
+          details: error.issues.map((issue) => ({
+            field: issue.path.join('.'),
+            message: issue.message,
+          })),
+        },
+      });
+    }
+
+    if (error instanceof authService.AuthServiceError) {
+      const status = error.code === 'INVALID_CREDENTIALS' ? 401 : 403;
+      const code = error.code === 'INVALID_CREDENTIALS' ? 'UNAUTHORIZED' : 'FORBIDDEN';
+      return res.status(status).json({
+        success: false,
+        message: error.message,
+        error: { code },
+      });
+    }
+
+    return next(error);
   }
 };
 
