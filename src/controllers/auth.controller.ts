@@ -6,9 +6,16 @@ export const register = async (req: Request, res: Response) => {
   try {
     const validatedData = registerSchema.parse(req.body);
     const user = await authService.registerUser(validatedData);
-    res.status(201).json({ success: true, message: 'Registrasi berhasil', data: user });
+    res.status(201).json({ 
+      success: true, 
+      message: 'Registrasi berhasil', 
+      data: user 
+    });
   } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message || 'Terjadi kesalahan', error: { code: 'BAD_REQUEST' } });
+    res.status(400).json({ 
+      success: false, 
+      message: error.message || 'Terjadi kesalahan', 
+      error: { code: 'BAD_REQUEST' } });
   }
 };
 

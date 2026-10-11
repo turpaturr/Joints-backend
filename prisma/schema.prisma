@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = env("DATABASE_URL")
 }
 
 enum Role {
@@ -35,7 +35,6 @@ model PatientProfile {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Data Profil Pasien
   namaLengkap  String
   tanggalLahir DateTime?
   jenisKelamin JenisKelamin?
@@ -44,11 +43,11 @@ model PatientProfile {
   kondisiMedis String?
   catatanAwal  String?
 
-  // Relasi: Nakes yang bertanggung jawab
   nakesId String?
   nakes   NakesProfile? @relation(fields: [nakesId], references: [id])
 
-  therapySessions TherapySession[]
+  medicationSchedules MedicationSchedule[]
+  medicationLogs MedicationLog[]
 }
 
 model NakesProfile {
@@ -56,7 +55,6 @@ model NakesProfile {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Data Profil Nakes
   namaLengkap  String
   spesialisasi String?
   nomorRegis   String?
@@ -64,6 +62,7 @@ model NakesProfile {
   nomorTelepon String?
 
   pasien PatientProfile[]
+  medicationSchedules MedicationSchedule[]
 }
 
 model TherapyMovement {
@@ -95,23 +94,33 @@ model TherapyPrescription {
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-
-  sessions TherapySession[]
 }
 
-model TherapySession {
-  id                String   @id @default(uuid())
-  patientId         String
-  patient           PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  prescriptionId    String?
-  prescription      TherapyPrescription? @relation(fields: [prescriptionId], references: [id], onDelete: SetNull)
-  programName       String
-  estimatedAngle    Float
-  validRepetitions  Int
-  durationMs        Int
-  sampleCount       Int
-  performedAt       DateTime
-  createdAt         DateTime @default(now())
+model MedicationSchedule {
+  id             String   @id @default(uuid())
+  patientId      String
+  nakesId        String
+  medicationName String
+  dosage         String
+  frequency      String   
+  timeToTake     String[] 
+  startDate      DateTime
+  endDate        DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  patient        PatientProfile  @relation(fields: [patientId], references: [id])
+  nakes          NakesProfile    @relation(fields: [nakesId], references: [id])
+  logs           MedicationLog[]
+}
 
-  @@index([patientId, performedAt])
+model MedicationLog {
+  id             String   @id @default(uuid())
+  scheduleId     String
+  patientId      String
+  status         String   
+  takenAt        DateTime @default(now())
+
+  schedule       MedicationSchedule @relation(fields: [scheduleId], references: [id])
+  patient        PatientProfile     @relation(fields: [patientId], references: [id])
 }
