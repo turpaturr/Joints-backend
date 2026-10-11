@@ -43,6 +43,7 @@ model PatientProfile {
   kondisiMedis String?
   catatanAwal  String?
 
+  therapySessions TherapySession[]
   nakesId String?
   nakes   NakesProfile? @relation(fields: [nakesId], references: [id])
 
@@ -92,8 +93,28 @@ model TherapyPrescription {
   tanggalMulai     DateTime
   tanggalBerakhir  DateTime
 
+
+  therapySessions TherapySession[]
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+model TherapySession {
+  id                String   @id @default(uuid())
+  patientId         String
+  patient           PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  prescriptionId    String?
+  prescription      TherapyPrescription? @relation(fields: [prescriptionId], references: [id], onDelete: SetNull)
+  programName       String
+  estimatedAngle    Float
+  validRepetitions  Int
+  durationMs        Int
+  sampleCount       Int
+  performedAt       DateTime
+  createdAt         DateTime @default(now())
+
+  @@index([patientId, performedAt])
 }
 
 model MedicationSchedule {
