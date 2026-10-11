@@ -46,6 +46,8 @@ model PatientProfile {
   therapySessions TherapySession[]
   nakesId String?
   nakes   NakesProfile? @relation(fields: [nakesId], references: [id])
+  connectionCode String? @unique
+  connectionCodeExpiresAt DateTime?
 
   medicationSchedules MedicationSchedule[]
   medicationLogs MedicationLog[]
@@ -73,7 +75,7 @@ model TherapyMovement {
   instruksi   String   @db.Text
   mediaUrl    String?  // URL video atau gambar
   mediaType   String?  // "VIDEO" atau "IMAGE"
-  
+
   prescriptions TherapyPrescription[]
   
   createdAt   DateTime @default(now())
@@ -84,7 +86,7 @@ model TherapyPrescription {
   id               String   @id @default(uuid())
   patientId        String
   nakesId          String
-  
+
   movementId       String
   movement         TherapyMovement @relation(fields: [movementId], references: [id])
 
@@ -92,7 +94,6 @@ model TherapyPrescription {
   frekuensiPerHari Int
   tanggalMulai     DateTime
   tanggalBerakhir  DateTime
-
 
   therapySessions TherapySession[]
 

@@ -1,5 +1,6 @@
 import prisma from '../prisma';
 import { Prisma } from '@prisma/client';
+import type { Role } from '@prisma/client';
 import type { z } from 'zod';
 import type { therapySessionSchema } from '../utils/validations/therapy-session.validation';
 
@@ -22,9 +23,25 @@ export const createPrescription = async (nakesId: string, data: any) => {
   });
 };
 
-export const getPrescriptionsByPatient = async (patientId: string) => {
+export const getPrescriptionsByPatient = async (
+  userId: string,
+  role: Role,
+  patientId: string,
+) => {
+  const patient = role === 'PATIENT'
+    ? await prisma.patientProfile.findFirst({
+      where: { id: patientId, userId },
+      select: { id: true },
+    })
+    : await prisma.patientProfile.findFirst({
+      where: { id: patientId, nakes: { userId } },
+      select: { id: true },
+    });
+
+  if (!patient) return null;
+
   return await prisma.therapyPrescription.findMany({
-    where: { patientId },
+    where: { patientId: patient.id },
     include: {
       movement: {
         select: { namaGerakan: true, instruksi: true, mediaUrl: true, mediaType: true }

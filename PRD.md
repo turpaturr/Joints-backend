@@ -342,6 +342,11 @@ Contoh struktur:
 │   ├── POST /register
 │   └── POST /login
 │
+├── /connections
+│   ├── GET  /status     # PATIENT: melihat status koneksi
+│   ├── POST /code       # PATIENT: membuat kode 6 digit, berlaku 10 menit
+│   └── POST /redeem     # NAKES: menautkan pasien dengan kode
+│
 ├── /patients
 │   └── GET /me
 │
@@ -395,6 +400,16 @@ nilainya harus berupa UUID resep milik pasien.
 - Input divalidasi menggunakan Zod.
 - Authorization harus dilakukan sebelum mengakses data pasien.
 - Controller tidak boleh melakukan query Prisma secara langsung.
+
+### Menghubungkan Pasien dengan Nakes
+
+Pasien yang belum terhubung meminta kode melalui `POST /api/connections/code`.
+Kode 6 digit berlaku selama 10 menit. Nakes memasukkan kode tersebut melalui
+`POST /api/connections/redeem` dengan body `{"code":"123456"}`. Kode hanya dapat
+digunakan sekali. Aplikasi pasien dapat mengecek status melalui
+`GET /api/connections/status`; setelah berhasil ditautkan, pasien muncul pada daftar
+`GET /api/therapy/patients` milik Nakes tersebut. Kode yang sudah kedaluwarsa
+atau digunakan tidak dapat dipakai kembali.
 
 ---
 

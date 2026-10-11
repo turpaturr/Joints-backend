@@ -45,7 +45,25 @@ export const addPrescription = async (req: Request, res: Response, next: NextFun
 export const getPatientPrescriptions = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const patientId = req.params.patientId as string;
-    const prescriptions = await therapyService.getPrescriptionsByPatient(patientId);
+    const user = (req as any).user;
+    const userId = user?.userId;
+    const role = user?.role;
+    if (typeof userId !== 'string' || (role !== 'PATIENT' && role !== 'NAKES')) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token pengguna tidak valid',
+        error: { code: 'INVALID_TOKEN_PAYLOAD' },
+      });
+    }
+
+    const prescriptions = await therapyService.getPrescriptionsByPatient(userId, role, patientId);
+    if (!prescriptions) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pasien tidak ditemukan atau tidak dapat diakses',
+        error: { code: 'PATIENT_NOT_FOUND' },
+      });
+    }
     res.status(200).json({ success: true, message: "Resep terapi pasien", data: prescriptions });
   } catch (error) {
     next(error);
