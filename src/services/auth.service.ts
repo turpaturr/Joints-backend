@@ -49,7 +49,7 @@ export const loginUser = async (data: z.infer<typeof loginSchema>) => {
   if (!canLogin) {
     throw new AuthServiceError(
       'PLATFORM_FORBIDDEN',
-      'Role akun tidak diizinkan login melalui platform ini',
+      'Akun tidak terdaftar untuk platform ini',
     );
   }
 
