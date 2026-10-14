@@ -8,7 +8,15 @@ export const createMedicationScheduleSchema = z
     medicationName: z.string().trim().min(1, 'Nama obat wajib diisi').max(100, 'Nama obat terlalu panjang'),
     dosage: z.string().trim().min(1, 'Dosis obat wajib diisi'),
     frequency: z.string().trim().min(1, 'Frekuensi konsumsi wajib diisi'),
-    timeToTake: z.string().trim().min(1, 'Waktu konsumsi wajib diisi'),
+    timeToTake: z
+      .union([
+        z.string().trim().min(1, 'Waktu konsumsi wajib diisi'),
+        z.array(z.string().trim().min(1, 'Waktu konsumsi wajib diisi')).min(1, 'Waktu konsumsi wajib diisi'),
+      ])
+      .transform((value) => (Array.isArray(value) ? value : [value]))
+      .refine((items) => items.every((item) => item.trim().length > 0), {
+        message: 'Waktu konsumsi wajib diisi',
+      }),
     startDate: z.string().trim().refine(isValidDateString, {
       message: 'Tanggal mulai tidak valid',
     }),

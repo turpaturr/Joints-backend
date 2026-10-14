@@ -41,6 +41,11 @@ model PatientProfile {
   nomorTelepon String?
   alamat       String?
   kondisiMedis String?
+  riwayatPenyakit String? @db.Text
+  alergi       String? @db.Text
+  lokasiKeluhan String?
+  tanggalMulaiKeluhan DateTime?
+  skalaNyeri   Int?
   catatanAwal  String?
 
   therapySessions TherapySession[]

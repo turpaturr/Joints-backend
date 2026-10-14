@@ -1,6 +1,10 @@
   import { randomInt } from 'node:crypto';
   import { Prisma } from '@prisma/client';
+  import type { z } from 'zod';
   import prisma from '../prisma';
+  import type { updatePatientClinicalDataSchema } from '../utils/validations/connection.validation';
+
+  type PatientClinicalData = z.infer<typeof updatePatientClinicalDataSchema>;
 
   const CODE_TTL_MS = 10 * 60 * 1000;
   const CODE_GENERATION_ATTEMPTS = 5;
@@ -9,7 +13,8 @@
     | 'PATIENT_PROFILE_NOT_FOUND'
     | 'NAKES_PROFILE_NOT_FOUND'
     | 'PATIENT_ALREADY_CONNECTED'
-    | 'INVALID_OR_EXPIRED_CODE';
+    | 'INVALID_OR_EXPIRED_CODE'
+    | 'PATIENT_NOT_FOUND_OR_NOT_ASSIGNED';
 
   export class ConnectionServiceError extends Error {
     constructor(
@@ -138,7 +143,38 @@
           'Kode tidak valid atau sudah kedaluwarsa',
         );
       }
-                
       return { id: patient.id, namaLengkap: patient.namaLengkap };
+    });
+  };
+
+  export const updatePatientClinicalData = async (
+    nakesUserId: string,
+    patientId: string,
+    data: PatientClinicalData,
+  ) => {
+    const result = await prisma.patientProfile.updateMany({
+      where: { id: patientId, nakes: { userId: nakesUserId } },
+      data,
+    });
+
+    if (result.count !== 1) {
+      throw new ConnectionServiceError(
+        'PATIENT_NOT_FOUND_OR_NOT_ASSIGNED',
+        'Pasien tidak ditemukan atau bukan pasien binaan Anda',
+      );
+    }
+
+    return prisma.patientProfile.findUniqueOrThrow({
+      where: { id: patientId },
+      select: {
+        id: true,
+        kondisiMedis: true,
+        riwayatPenyakit: true,
+        alergi: true,
+        lokasiKeluhan: true,
+        tanggalMulaiKeluhan: true,
+        skalaNyeri: true,
+        catatanAwal: true,
+      },
     });
   };

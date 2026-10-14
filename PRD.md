@@ -404,9 +404,30 @@ nilainya harus berupa UUID resep milik pasien.
 ### Menghubungkan Pasien dengan Nakes
 
 Pasien yang belum terhubung meminta kode melalui `POST /api/connections/code`.
-Kode 6 digit berlaku selama 10 menit. Nakes memasukkan kode tersebut melalui
-`POST /api/connections/redeem` dengan body `{"code":"123456"}`. Kode hanya dapat
-digunakan sekali. Aplikasi pasien dapat mengecek status melalui
+Kode 6 digit berlaku selama 10 menit. Nakes memasukkan kode dan data awal pasien
+melalui `POST /api/connections/redeem` dengan body `{"code":"123456"}`. Kode hanya
+digunakan untuk menautkan pasien; setelah berhasil, Nakes mengisi data klinis
+melalui `PATCH /api/connections/patients/:patientId/clinical`. Data yang dapat
+disimpan meliputi kondisi medis, riwayat penyakit, alergi, lokasi keluhan,
+tanggal mulai keluhan, skala nyeri (0–10), dan catatan awal. Contoh:
+
+```json
+{
+  "kondisiMedis": "ACL",
+  "riwayatPenyakit": "Maag",
+  "alergi": "Tidak diketahui",
+  "lokasiKeluhan": "Lutut",
+  "tanggalMulaiKeluhan": "2026-10-01",
+  "skalaNyeri": 4,
+  "catatanAwal": "Keluhan nyeri saat menekuk lutut."
+}
+```
+
+Request pembaruan menerima sebagian atau seluruh field tersebut; field yang
+dikirim sebagai string kosong atau `null` akan dikosongkan, sedangkan field yang
+tidak dikirim tidak berubah. Endpoint hanya dapat digunakan Nakes yang menangani
+pasien tersebut. Kode hanya dapat digunakan sekali. Data klinis disimpan sebagai
+bagian profil pasien. Aplikasi pasien dapat mengecek status melalui
 `GET /api/connections/status`; setelah berhasil ditautkan, pasien muncul pada daftar
 `GET /api/therapy/patients` milik Nakes tersebut. Kode yang sudah kedaluwarsa
 atau digunakan tidak dapat dipakai kembali.

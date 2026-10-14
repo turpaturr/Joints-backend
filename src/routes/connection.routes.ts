@@ -22,5 +22,11 @@ router.post(
   requireRole(['NAKES']),
   connectionController.redeemPatientCode,
 );
+router.patch(
+  '/patients/:patientId/clinical',
+  requireAuth,
+  requireRole(['NAKES']),
+  connectionController.updatePatientClinicalData,
+);
 
 export default router;
