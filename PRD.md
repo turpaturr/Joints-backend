@@ -342,6 +342,11 @@ Contoh struktur:
 │   ├── POST /register
 │   └── POST /login
 │
+├── /connections
+│   ├── GET  /status     # PATIENT: melihat status koneksi
+│   ├── POST /code       # PATIENT: membuat kode 6 digit, berlaku 10 menit
+│   └── POST /redeem     # NAKES: menautkan pasien dengan kode
+│
 ├── /patients
 │   └── GET /me
 │
@@ -362,6 +367,32 @@ Contoh struktur:
 
 Endpoint final dapat berkembang mengikuti implementasi backend.
 
+### Membuat Sesi Terapi
+
+`POST /api/therapy-sessions` membutuhkan JWT dengan role `PATIENT`. Identitas pasien
+diambil dari JWT; client tidak mengirim `patientId`. Jika `prescriptionId` disertakan,
+resep harus dimiliki pasien tersebut.
+
+```json
+{
+  "programName": "Latihan Lutut",
+  "estimatedAngle": 32.5,
+  "validRepetitions": 3,
+  "durationMs": 120000,
+  "sampleCount": 1200,
+  "performedAt": "2026-10-10T08:00:00.000Z"
+}
+```
+
+Sudut dan repetisi merupakan estimasi generik dari data gyroscope, bukan pengukuran
+medis. Implementasi saat ini mengintegrasikan laju rotasi (rad/s), memilih sumbu
+dengan rentang gerak terbesar, dan menghitung satu repetisi ketika sudut melewati
+30° lalu kembali ke dalam 10° dari posisi awal. Jeda sampel di atas 500 ms tidak
+diintegrasikan. Ambang ini bukan target medis dan perlu dikalibrasi terhadap gerakan
+serta resep yang sebenarnya. `prescriptionId` bersifat opsional jika sesi tidak
+dijalankan dari resep yang telah dimuat oleh aplikasi. Jika resep disertakan,
+nilainya harus berupa UUID resep milik pasien.
+
 ### Prinsip API
 
 - Semua endpoint menerima dan mengembalikan JSON.
@@ -369,6 +400,37 @@ Endpoint final dapat berkembang mengikuti implementasi backend.
 - Input divalidasi menggunakan Zod.
 - Authorization harus dilakukan sebelum mengakses data pasien.
 - Controller tidak boleh melakukan query Prisma secara langsung.
+
+### Menghubungkan Pasien dengan Nakes
+
+Pasien yang belum terhubung meminta kode melalui `POST /api/connections/code`.
+Kode 6 digit berlaku selama 10 menit. Nakes memasukkan kode dan data awal pasien
+melalui `POST /api/connections/redeem` dengan body `{"code":"123456"}`. Kode hanya
+digunakan untuk menautkan pasien; setelah berhasil, Nakes mengisi data klinis
+melalui `PATCH /api/connections/patients/:patientId/clinical`. Data yang dapat
+disimpan meliputi kondisi medis, riwayat penyakit, alergi, lokasi keluhan,
+tanggal mulai keluhan, skala nyeri (0–10), dan catatan awal. Contoh:
+
+```json
+{
+  "kondisiMedis": "ACL",
+  "riwayatPenyakit": "Maag",
+  "alergi": "Tidak diketahui",
+  "lokasiKeluhan": "Lutut",
+  "tanggalMulaiKeluhan": "2026-10-01",
+  "skalaNyeri": 4,
+  "catatanAwal": "Keluhan nyeri saat menekuk lutut."
+}
+```
+
+Request pembaruan menerima sebagian atau seluruh field tersebut; field yang
+dikirim sebagai string kosong atau `null` akan dikosongkan, sedangkan field yang
+tidak dikirim tidak berubah. Endpoint hanya dapat digunakan Nakes yang menangani
+pasien tersebut. Kode hanya dapat digunakan sekali. Data klinis disimpan sebagai
+bagian profil pasien. Aplikasi pasien dapat mengecek status melalui
+`GET /api/connections/status`; setelah berhasil ditautkan, pasien muncul pada daftar
+`GET /api/therapy/patients` milik Nakes tersebut. Kode yang sudah kedaluwarsa
+atau digunakan tidak dapat dipakai kembali.
 
 ---
 

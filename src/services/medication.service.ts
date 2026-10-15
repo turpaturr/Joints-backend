@@ -11,6 +11,12 @@ export const createMedicationSchedule = async (userId: string, data: any) => {
 
   if (!nakes) throw new Error('Profil Nakes tidak ditemukan');
 
+  const timeToTake = Array.isArray(data.timeToTake)
+    ? data.timeToTake
+    : typeof data.timeToTake === 'string'
+      ? [data.timeToTake]
+      : [];
+
   const schedule = await prisma.medicationSchedule.create({
     data: {
       nakesId: nakes.id, // Gunakan ID dari NakesProfile, BUKAN User ID
@@ -18,7 +24,7 @@ export const createMedicationSchedule = async (userId: string, data: any) => {
       medicationName: data.medicationName,
       dosage: data.dosage,
       frequency: data.frequency,
-      timeToTake: data.timeToTake, 
+      timeToTake: timeToTake.map((value: string) => value.trim()).filter(Boolean),
       startDate: new Date(data.startDate),
       endDate: new Date(data.endDate),
     },

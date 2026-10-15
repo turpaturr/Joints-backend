@@ -1,5 +1,10 @@
 import prisma from '../prisma';
 import { Prisma } from '@prisma/client';
+import type { Role } from '@prisma/client';
+import type { z } from 'zod';
+import type { therapySessionSchema } from '../utils/validations/therapy-session.validation';
+
+type TherapySessionInput = z.infer<typeof therapySessionSchema>;
 
 // --- Master Gerakan (Therapy Movement) ---
 export const createMovement = async (data: Prisma.TherapyMovementCreateInput) => {
@@ -18,9 +23,25 @@ export const createPrescription = async (nakesId: string, data: any) => {
   });
 };
 
-export const getPrescriptionsByPatient = async (patientId: string) => {
+export const getPrescriptionsByPatient = async (
+  userId: string,
+  role: Role,
+  patientId: string,
+) => {
+  const patient = role === 'PATIENT'
+    ? await prisma.patientProfile.findFirst({
+      where: { id: patientId, userId },
+      select: { id: true },
+    })
+    : await prisma.patientProfile.findFirst({
+      where: { id: patientId, nakes: { userId } },
+      select: { id: true },
+    });
+
+  if (!patient) return null;
+
   return await prisma.therapyPrescription.findMany({
-    where: { patientId },
+    where: { patientId: patient.id },
     include: {
       movement: {
         select: { namaGerakan: true, instruksi: true, mediaUrl: true, mediaType: true }
@@ -30,6 +51,82 @@ export const getPrescriptionsByPatient = async (patientId: string) => {
   });
 };
 
+export const getPatientsByNakes = async (userId: string) => {
+  const nakes = await prisma.nakesProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!nakes) return null;
+
+  return prisma.patientProfile.findMany({
+    where: { nakesId: nakes.id },
+    include: {
+      user: { select: { id: true, email: true } },
+      _count: { select: { therapySessions: true } },
+    },
+    orderBy: { namaLengkap: 'asc' },
+  });
+};
+
+export const getTherapySessionsByPatientAndNakes = async (
+  userId: string,
+  patientId: string,
+) => {
+  const nakes = await prisma.nakesProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!nakes) return null;
+
+  const patient = await prisma.patientProfile.findFirst({
+    where: { id: patientId, nakesId: nakes.id },
+    select: { id: true },
+  });
+  if (!patient) return null;
+
+  return prisma.therapySession.findMany({
+    where: { patientId: patient.id },
+    include: {
+      prescription: {
+        include: { movement: true },
+      },
+    },
+    orderBy: { performedAt: 'desc' },
+  });
+};
+
 export const deletePrescription = async (id: string) => {
   return await prisma.therapyPrescription.delete({ where: { id } });
+};
+
+export const createTherapySession = async (
+  userId: string,
+  data: TherapySessionInput,
+) => {
+  const patient = await prisma.patientProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!patient) return null;
+
+  if (data.prescriptionId) {
+    const prescription = await prisma.therapyPrescription.findFirst({
+      where: { id: data.prescriptionId, patientId: patient.id },
+      select: { id: true },
+    });
+    if (!prescription) return null;
+  }
+
+  return prisma.therapySession.create({
+    data: {
+      patientId: patient.id,
+      prescriptionId: data.prescriptionId,
+      programName: data.programName,
+      estimatedAngle: data.estimatedAngle,
+      validRepetitions: data.validRepetitions,
+      durationMs: data.durationMs,
+      sampleCount: data.sampleCount,
+      performedAt: new Date(data.performedAt),
+    },
+  });
 };
