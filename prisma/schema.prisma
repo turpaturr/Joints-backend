@@ -18,6 +18,11 @@ enum JenisKelamin {
   PEREMPUAN
 }
 
+enum TherapyType {
+  GYROSCOPE
+  CAMERA
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -113,6 +118,7 @@ model TherapySession {
   prescriptionId    String?
   prescription      TherapyPrescription? @relation(fields: [prescriptionId], references: [id], onDelete: SetNull)
   programName       String
+  therapyType       TherapyType @default(GYROSCOPE)
   estimatedAngle    Float
   validRepetitions  Int
   durationMs        Int

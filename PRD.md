@@ -376,6 +376,7 @@ resep harus dimiliki pasien tersebut.
 ```json
 {
   "programName": "Latihan Lutut",
+  "therapyType": "GYROSCOPE",
   "estimatedAngle": 32.5,
   "validRepetitions": 3,
   "durationMs": 120000,
@@ -384,14 +385,18 @@ resep harus dimiliki pasien tersebut.
 }
 ```
 
-Sudut dan repetisi merupakan estimasi generik dari data gyroscope, bukan pengukuran
-medis. Implementasi saat ini mengintegrasikan laju rotasi (rad/s), memilih sumbu
-dengan rentang gerak terbesar, dan menghitung satu repetisi ketika sudut melewati
-30° lalu kembali ke dalam 10° dari posisi awal. Jeda sampel di atas 500 ms tidak
+`therapyType` wajib bernilai `GYROSCOPE` atau `CAMERA` dan secara default bernilai
+`GYROSCOPE` untuk kompatibilitas dengan client lama. Pada mode `GYROSCOPE`, sudut
+dan repetisi merupakan estimasi generik dari data gyroscope, bukan pengukuran medis.
+Implementasi saat ini mengintegrasikan laju rotasi (rad/s), memilih sumbu dengan
+rentang gerak terbesar, dan menghitung satu repetisi ketika sudut melewati 30° lalu
+kembali ke dalam 10° dari posisi awal. Jeda sampel di atas 500 ms tidak
 diintegrasikan. Ambang ini bukan target medis dan perlu dikalibrasi terhadap gerakan
-serta resep yang sebenarnya. `prescriptionId` bersifat opsional jika sesi tidak
-dijalankan dari resep yang telah dimuat oleh aplikasi. Jika resep disertakan,
-nilainya harus berupa UUID resep milik pasien.
+serta resep yang sebenarnya. Mode `CAMERA` menyimpan hasil sesi latihan berbasis
+kamera; hasil tersebut tetap merupakan estimasi dan bukan pengukuran klinis resmi.
+`prescriptionId` bersifat opsional jika sesi tidak dijalankan dari resep yang telah
+dimuat oleh aplikasi. Jika resep disertakan, nilainya harus berupa UUID resep milik
+pasien.
 
 ### Prinsip API
 

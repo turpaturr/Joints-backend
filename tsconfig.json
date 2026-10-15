@@ -3,7 +3,9 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
@@ -15,6 +17,19 @@
     "declarationMap": true,
     "sourceMap": true
   },
+<<<<<<< HEAD
+  "include": [
+    "src/**/*",
+    "prisma/seed.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "extends": "expo/tsconfig.base"
+}
+=======
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
+>>>>>>> 665b45490ac9a4a0fe90af5f752634c3c9d379d2
