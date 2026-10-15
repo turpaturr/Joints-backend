@@ -1,0 +1,4 @@
+CREATE TYPE "TherapyType" AS ENUM ('GYROSCOPE', 'CAMERA');
+
+ALTER TABLE "TherapySession"
+ADD COLUMN "therapyType" "TherapyType" NOT NULL DEFAULT 'GYROSCOPE';

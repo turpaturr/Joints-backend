@@ -122,6 +122,7 @@ export const createTherapySession = async (
       patientId: patient.id,
       prescriptionId: data.prescriptionId,
       programName: data.programName,
+      therapyType: data.therapyType,
       estimatedAngle: data.estimatedAngle,
       validRepetitions: data.validRepetitions,
       durationMs: data.durationMs,
