@@ -8,6 +8,7 @@ import therapyRoutes from './routes/therapy.routes';
 import therapySessionRoutes from './routes/therapy-session.routes';
 import medicationRoutes from './routes/medication.routes';
 import connectionRoutes from './routes/connection.routes';
+import consultationRoutes from './routes/consultation.routes';
 
 const app: Application = express();
 
@@ -26,6 +27,7 @@ app.use('/api/therapy', therapyRoutes);
 app.use('/api/therapy-sessions', therapySessionRoutes);
 app.use('/api/medications', medicationRoutes);
 app.use('/api/connections', connectionRoutes);
+app.use('/api/consultations', consultationRoutes);
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Not Found' });
 });

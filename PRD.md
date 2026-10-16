@@ -19,7 +19,7 @@ Connect adalah aplikasi backend yang menjembatani pasien fisioterapi mandiri di 
 
 Aplikasi memungkinkan Nakes memonitor kepatuhan pasien terhadap program terapi, sementara pasien mendapatkan bantuan untuk melakukan gerakan terapi sesuai instruksi melalui sensor gyroscope pada smartphone.
 
-Connect juga menyediakan komunikasi berbasis AI untuk membantu pasien menyampaikan keluhan secara lebih terstruktur kepada Nakes.
+Connect menyediakan fitur pelaporan keluhan agar pasien dapat menyampaikan kondisi yang dialami kepada Nakes yang menanganinya. Nakes dapat membaca laporan tersebut dan memberikan respons atau tindak lanjut melalui aplikasi.
 
 ### 1.3 Masalah yang Diselesaikan
 
@@ -60,7 +60,7 @@ Connect memiliki tujuan utama:
 3. Membantu pasien melakukan gerakan terapi sesuai target yang diberikan Nakes.
 4. Membantu pasien mencatat kepatuhan terhadap jadwal obat.
 5. Menyederhanakan komunikasi keluhan pasien kepada Nakes.
-6. Membantu Nakes mendapatkan ringkasan keluhan pasien tanpa menggantikan keputusan medis.
+6. Memudahkan Nakes membaca, meninjau, dan menindaklanjuti keluhan yang disampaikan pasien.
 
 ---
 
@@ -96,7 +96,7 @@ Endpoint tertentu hanya dapat diakses oleh role yang sesuai.
 | P3 | Jadwal Terapi | Menampilkan jadwal terapi yang telah ditentukan oleh Nakes. |
 | P4 | Riwayat Terapi | Menampilkan riwayat sesi terapi, termasuk sudut estimasi, repetisi valid, dan durasi. |
 | P5 | Catatan Nakes | Pasien dapat membaca catatan atau arahan yang diberikan Nakes. |
-| P6 | AI Chatbot | Pasien dapat menyampaikan keluhan kepada AI untuk kemudian dirangkum dan diteruskan kepada Nakes. |
+| P6 | Pelaporan Keluhan | Pasien dapat mengirimkan laporan keluhan kepada Nakes yang menangani dan melihat status serta respons atas laporan tersebut. |
 
 ### 5.1 Pendeteksi Gerakan Gyroscope
 
@@ -162,30 +162,41 @@ Pasien dapat membaca:
 
 Pasien tidak dapat mengubah atau menghapus catatan tersebut.
 
-### 5.6 AI Chatbot Penjembatan
+### 5.6 Pelaporan Keluhan
 
-Pasien dapat menyampaikan keluhan melalui percakapan dengan AI.
+Pasien dapat mengirimkan laporan keluhan secara langsung kepada Nakes yang menangani.
 
-AI bertugas:
+Informasi laporan dapat mencakup:
 
-1. Menggali informasi mengenai keluhan pasien.
-2. Membantu menyusun informasi secara lebih terstruktur.
-3. Membuat ringkasan keluhan.
-4. Menyimpan ringkasan.
-5. Mengirimkan ringkasan kepada Nakes.
+- Judul atau topik keluhan.
+- Deskripsi keluhan yang ditulis pasien.
+- Lokasi keluhan, jika relevan.
+- Skala nyeri 0–10, jika relevan.
+- Waktu mulai keluhan, jika diketahui.
+- Waktu laporan dibuat.
+- Status penanganan laporan.
 
-#### AI Tidak Boleh
+#### Alur Pelaporan
 
-AI tidak boleh:
+1. Pasien mengisi dan mengirim laporan keluhan.
+2. Backend memvalidasi dan menyimpan laporan yang terkait dengan pasien tersebut.
+3. Laporan muncul pada daftar keluhan di dashboard Nakes yang menangani pasien.
+4. Nakes membaca detail laporan dan memberikan respons atau arahan sesuai kewenangannya.
+5. Pasien dapat membaca respons Nakes dan melihat status laporan.
 
-- Memberikan diagnosis.
-- Menentukan penyakit.
-- Meresepkan obat.
-- Menentukan terapi.
-- Mengubah resep Nakes.
-- Menggantikan keputusan tenaga kesehatan.
+#### Status Laporan
 
-AI hanya berfungsi sebagai **intermediary/penghubung informasi** antara pasien dan Nakes.
+- `PENDING`: laporan menunggu ditinjau Nakes.
+- `IN_PROGRESS`: laporan sedang ditindaklanjuti Nakes.
+- `RESOLVED`: Nakes menandai laporan telah ditangani atau ditutup.
+
+#### Batasan Fitur
+
+- Fitur ini merupakan sarana komunikasi tindak lanjut, bukan layanan darurat.
+- Sistem tidak memberikan diagnosis atau rekomendasi medis otomatis.
+- Arahan klinis diberikan oleh Nakes sesuai kewenangannya.
+- Pasien harus diberi tahu bahwa laporan tidak selalu dibaca atau dibalas secara langsung. Untuk kondisi darurat atau kondisi yang memburuk, pasien harus mencari pertolongan medis segera.
+- Untuk MVP, fitur ini menggunakan laporan dan respons Nakes, bukan percakapan chat real-time.
 
 ---
 
@@ -199,8 +210,8 @@ AI hanya berfungsi sebagai **intermediary/penghubung informasi** antara pasien d
 | N4 | Jadwal Obat | Membuat dan mengubah jadwal obat pasien. |
 | N5 | Riwayat Terapi | Melihat hasil sesi terapi pasien. |
 | N6 | Catatan Pasien | Membuat catatan atau arahan untuk pasien. |
-| N7 | Ringkasan Keluhan AI | Melihat ringkasan keluhan yang dibuat AI. |
-| N8 | Respons Keluhan | Memberikan respons terhadap keluhan pasien. |
+| N7 | Daftar dan Detail Keluhan | Melihat laporan keluhan dari pasien yang berada di bawah tanggung jawabnya. |
+| N8 | Tindak Lanjut Keluhan | Memberikan respons atau arahan dan memperbarui status penanganan laporan. |
 
 ### 6.1 Dashboard Monitoring
 
@@ -211,7 +222,7 @@ Dashboard Nakes menampilkan informasi pasien yang ditangani, seperti:
 - Kepatuhan obat.
 - Riwayat sesi terapi.
 - Tren hasil terapi.
-- Keluhan pasien yang belum ditangani.
+- Keluhan pasien yang belum ditinjau atau masih dalam proses penanganan.
 
 ### 6.2 Manajemen Pasien
 
@@ -222,7 +233,7 @@ Nakes dapat:
 - Melihat riwayat terapi.
 - Melihat kepatuhan pasien.
 - Melihat catatan pasien.
-- Melihat keluhan yang dikirim pasien.
+- Melihat laporan keluhan yang dikirim pasien.
 
 Pasien hanya dapat diakses oleh Nakes yang memiliki hubungan/assignment dengan pasien tersebut.
 
@@ -292,17 +303,17 @@ Jika pasien memiliki keluhan:
 ```text
 Pasien
   ↓
-AI Chatbot
+Mengisi Laporan Keluhan
   ↓
-Penggalian Keluhan
-  ↓
-Ringkasan AI
-  ↓
-Database
+Backend Memvalidasi dan Menyimpan Laporan
   ↓
 Dashboard Nakes
   ↓
-Respons Nakes
+Nakes Membaca Laporan
+  ↓
+Nakes Memberikan Respons / Arahan
+  ↓
+Pasien Membaca Respons dan Status Laporan
 ```
 
 ### 7.2 Alur Nakes
@@ -321,7 +332,7 @@ Lihat:
 - Kepatuhan
 - Jadwal Obat
 - Catatan
-- Keluhan AI
+- Laporan keluhan pasien
   ↓
 Memberikan Arahan / Respons
 ```
@@ -362,7 +373,12 @@ Contoh struktur:
 │
 ├── /nakes-notes
 │
-└── /chat
+├── /consultations
+│   ├── POST /                 # PATIENT: membuat laporan keluhan
+│   ├── GET  /                 # daftar laporan sesuai role
+│   ├── GET  /:consultationId  # detail laporan
+│   ├── POST /:consultationId/responses  # NAKES: memberi respons
+│   └── PATCH /:consultationId/status   # NAKES: memperbarui status
 ```
 
 Endpoint final dapat berkembang mengikuti implementasi backend.
@@ -491,8 +507,9 @@ Pasien hanya boleh:
 - Membaca data miliknya sendiri.
 - Membuat sesi terapi untuk dirinya sendiri.
 - Membuat log konsumsi obat untuk dirinya sendiri.
-- Mengirim keluhan untuk dirinya sendiri.
-- Membaca catatan Nakes miliknya sendiri.
+- Membuat laporan keluhan untuk dirinya sendiri.
+- Membaca laporan keluhan dan respons Nakes miliknya sendiri.
+- Melihat status penanganan laporannya.
 
 Pasien tidak boleh:
 
@@ -514,7 +531,9 @@ Nakes dapat:
 - Membuat jadwal obat.
 - Mengubah jadwal obat.
 - Membuat catatan pasien.
-- Membaca dan merespons keluhan pasien.
+- Membaca laporan keluhan pasien yang ditangani.
+- Memberikan respons atau arahan pada laporan tersebut.
+- Memperbarui status penanganan laporan.
 
 ---
 
@@ -606,7 +625,6 @@ Service bertanggung jawab terhadap:
 - Pemrosesan terapi.
 - Kalkulasi kepatuhan.
 - Pemrosesan data gyroscope.
-- Integrasi Gemini AI.
 - Query database menggunakan Prisma Client.
 - Validasi business logic.
 
@@ -689,7 +707,7 @@ User
 │   ├── MedicationSchedule
 │   │   └── MedicationLog
 │   ├── NakesNote
-│   └── ChatSummary
+│   └── Consultation
 │
 └── NakesProfile
     └── NakesNote
@@ -727,7 +745,7 @@ Relasi:
 - TherapySession
 - MedicationSchedule
 - NakesNote
-- ChatSummary
+- Consultation
 
 ### 13.3 NakesProfile
 
@@ -771,15 +789,29 @@ Menyimpan riwayat pasien mencatat konsumsi obat.
 
 Menyimpan catatan yang dibuat Nakes untuk pasien.
 
-### 13.9 ChatSummary
+### 13.9 Consultation
 
-Menyimpan:
+Menyimpan laporan keluhan dan tindak lanjut Nakes.
 
-- Ringkasan percakapan.
-- Ringkasan AI.
-- Respons Nakes.
+Data utama:
 
-Data percakapan pasien harus diperlakukan sebagai data sensitif.
+- `id`
+- `patientId`
+- `nakesId`
+- `subject`
+- `description`
+- `location` (opsional)
+- `painScale` (opsional, 0–10)
+- `symptomStartedAt` (opsional)
+- `status` (`PENDING`, `IN_PROGRESS`, `RESOLVED`)
+- `response` (opsional, respons Nakes)
+- `createdAt`
+- `updatedAt`
+- `resolvedAt` (opsional)
+
+Data keluhan dan respons merupakan data kesehatan sensitif dan harus dilindungi dengan pemeriksaan otorisasi serta kepemilikan data.
+
+Untuk MVP, satu laporan menyimpan satu respons/tindak lanjut utama dari Nakes. Sistem belum memerlukan riwayat chat dua arah atau ringkasan AI.
 
 ---
 
@@ -816,7 +848,6 @@ Contoh:
 ```env
 DATABASE_URL=
 JWT_SECRET=
-GEMINI_API_KEY=
 PORT=
 ```
 
@@ -828,30 +859,15 @@ Data kesehatan pasien tidak boleh dicetak secara penuh ke server log.
 
 ---
 
-## 15. AI Safety Requirements
+## 15. Batasan dan Keamanan Pelaporan Keluhan
 
-AI chatbot menggunakan Gemini API.
+Fitur pelaporan keluhan pada MVP tidak menggunakan AI.
 
-AI harus memiliki system prompt yang secara eksplisit membatasi kemampuannya.
-
-### AI diperbolehkan
-
-- Mengajukan pertanyaan untuk memahami keluhan.
-- Mengidentifikasi informasi penting dari percakapan.
-- Menyusun ringkasan.
-- Menyusun informasi agar mudah dipahami Nakes.
-
-### AI dilarang
-
-- Memberikan diagnosis.
-- Menentukan penyakit.
-- Merekomendasikan obat.
-- Meresepkan obat.
-- Menentukan terapi.
-- Mengubah program terapi.
-- Menggantikan keputusan Nakes.
-
-Output AI harus diperlakukan sebagai **informasi pendukung**, bukan keputusan medis.
+- Laporan berasal langsung dari pasien dan tidak boleh diubah maknanya oleh sistem.
+- Sistem tidak memberikan diagnosis, rekomendasi obat, atau keputusan terapi otomatis.
+- Respons klinis diberikan oleh Nakes sesuai kewenangannya.
+- Data keluhan dan respons diperlakukan sebagai data kesehatan sensitif.
+- Pasien harus diberi tahu bahwa fitur ini bukan layanan darurat dan respons Nakes tidak dijamin real-time.
 
 ---
 
@@ -930,7 +946,6 @@ Error internal tidak boleh mengekspos:
 
 - Database credentials.
 - JWT secret.
-- Gemini API key.
 - Stack trace.
 - Data kesehatan pasien.
 
@@ -968,9 +983,11 @@ Backend minimal memiliki testing untuk fitur kritis.
 
 ### 19.5 AI
 
-- Chat dapat diproses.
-- Ringkasan dapat dibuat.
-- Guardrail AI tetap aktif.
+- Pasien dapat membuat laporan keluhan.
+- Nakes yang menangani dapat membaca laporan.
+- Nakes dapat memberikan respons dan memperbarui status.
+- Pasien hanya dapat membaca laporan dan respons miliknya sendiri.
+- Pengguna yang tidak memiliki hubungan penanganan tidak dapat mengakses laporan.
 
 ---
 
@@ -981,7 +998,6 @@ Environment variable yang digunakan:
 ```env
 DATABASE_URL=
 JWT_SECRET=
-GEMINI_API_KEY=
 PORT=
 ```
 
@@ -1026,8 +1042,8 @@ Untuk menjaga project tetap realistis, MVP Connect difokuskan pada:
 - Melihat riwayat terapi.
 - Melihat jadwal obat.
 - Mencatat konsumsi obat.
-- Chat dengan AI.
-- Melihat respons/catatan Nakes.
+- Mengirim laporan keluhan.
+- Melihat status dan respons Nakes.
 
 ### Nakes
 
@@ -1037,8 +1053,8 @@ Untuk menjaga project tetap realistis, MVP Connect difokuskan pada:
 - Melihat riwayat terapi.
 - Melihat kepatuhan.
 - Membuat catatan.
-- Melihat ringkasan AI.
-- Memberikan respons.
+- Melihat laporan keluhan pasien.
+- Memberikan respons dan memperbarui status penanganan.
 
 ---
 
@@ -1049,8 +1065,8 @@ MVP dapat dievaluasi menggunakan:
 1. Jumlah sesi terapi yang berhasil direkam.
 2. Tingkat kepatuhan terapi pasien.
 3. Tingkat kepatuhan obat.
-4. Jumlah keluhan yang berhasil dirangkum AI.
-5. Waktu respons Nakes terhadap keluhan pasien.
+4. Jumlah laporan keluhan yang berhasil ditinjau dan ditindaklanjuti.
+5. Waktu respons Nakes terhadap laporan keluhan.
 6. Persentase endpoint kritis yang memiliki automated test.
 7. Jumlah error authorization yang berhasil dicegah.
 
@@ -1070,7 +1086,7 @@ Development Connect harus mengikuti prinsip berikut:
 8. Terapkan RBAC dan ownership check.
 9. Jangan mengekspos data kesehatan pada log.
 10. Jangan hardcode secret.
-11. Jangan melemahkan AI guardrail.
+11. Fitur pelaporan keluhan MVP tidak bergantung pada AI.
 12. Jangan menganggap gyroscope sebagai alat medis.
 13. Jangan menambahkan dependency tanpa persetujuan.
 14. Jangan menghapus migration lama.
@@ -1144,7 +1160,7 @@ Prioritas pengembangan:
       ↓
 9. Nakes Notes
       ↓
-10. AI Chatbot
+10. Pelaporan Keluhan dan Tindak Lanjut Nakes
       ↓
 11. Dashboard & Analytics
       ↓

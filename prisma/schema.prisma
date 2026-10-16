@@ -23,6 +23,12 @@ enum TherapyType {
   CAMERA
 }
 
+enum ConsultationStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -61,6 +67,7 @@ model PatientProfile {
 
   medicationSchedules MedicationSchedule[]
   medicationLogs MedicationLog[]
+  consultations  Consultation[]
 }
 
 model NakesProfile {
@@ -76,6 +83,7 @@ model NakesProfile {
 
   pasien PatientProfile[]
   medicationSchedules MedicationSchedule[]
+  consultations  Consultation[]
 }
 
 model TherapyMovement {
@@ -157,3 +165,26 @@ model MedicationLog {
   schedule       MedicationSchedule @relation(fields: [scheduleId], references: [id])
   patient        PatientProfile     @relation(fields: [patientId], references: [id])
 }
+
+model Consultation {
+  id               String             @id @default(uuid())
+  patientId        String
+  nakesId          String
+  subject          String
+  description      String             @db.Text
+  location         String?
+  painScale        Int?
+  symptomStartedAt DateTime?
+  status           ConsultationStatus @default(PENDING)
+  response         String?            @db.Text
+  resolvedAt       DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  patient          PatientProfile     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  nakes            NakesProfile       @relation(fields: [nakesId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, createdAt])
+  @@index([nakesId, status])
+}
+
