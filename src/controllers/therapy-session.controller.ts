@@ -85,3 +85,71 @@ export const listPatientTherapySessions = async (
     next(error);
   }
 };
+
+export const listMyTherapySessions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = (req as any).user?.userId;
+    if (typeof userId !== 'string') {
+      return res.status(401).json({
+        success: false,
+        message: 'ID pengguna tidak ditemukan di token',
+        error: { code: 'INVALID_TOKEN_PAYLOAD' },
+      });
+    }
+
+    const sessions = await therapyService.getMyTherapySessions(userId);
+    if (!sessions) {
+      return res.status(404).json({
+        success: false,
+        message: 'Profil pasien tidak ditemukan',
+        error: { code: 'PATIENT_NOT_FOUND' },
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Riwayat sesi terapi Anda',
+      data: sessions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const listMyPrescriptions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const userId = (req as any).user?.userId;
+    if (typeof userId !== 'string') {
+      return res.status(401).json({
+        success: false,
+        message: 'ID pengguna tidak ditemukan di token',
+        error: { code: 'INVALID_TOKEN_PAYLOAD' },
+      });
+    }
+
+    const prescriptions = await therapyService.getMyPrescriptions(userId);
+    if (!prescriptions) {
+      return res.status(404).json({
+        success: false,
+        message: 'Profil pasien tidak ditemukan',
+        error: { code: 'PATIENT_NOT_FOUND' },
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Resep terapi Anda',
+      data: prescriptions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -277,6 +277,53 @@ export const deletePrescription = async (userId: string, id: string) => {
   }
 };
 
+export const getMyTherapySessions = async (userId: string) => {
+  const patient = await prisma.patientProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!patient) return null;
+
+  const sessions = await prisma.therapySession.findMany({
+    where: { patientId: patient.id },
+    include: {
+      prescription: {
+        include: { movement: { select: movementWithMediaSelect } },
+      },
+    },
+    orderBy: { performedAt: 'desc' },
+  });
+  return sessions.map((session) => ({
+    ...session,
+    prescription: session.prescription
+      ? {
+        ...session.prescription,
+        movement: serializeMovement(session.prescription.movement),
+      }
+      : null,
+  }));
+};
+
+export const getMyPrescriptions = async (userId: string) => {
+  const patient = await prisma.patientProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!patient) return null;
+
+  const prescriptions = await prisma.therapyPrescription.findMany({
+    where: { patientId: patient.id },
+    include: {
+      movement: { select: movementWithMediaSelect },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  return prescriptions.map((prescription) => ({
+    ...prescription,
+    movement: serializeMovement(prescription.movement),
+  }));
+};
+
 export const createTherapySession = async (
   userId: string,
   data: TherapySessionInput,

@@ -12,6 +12,20 @@ router.post(
 );
 
 router.get(
+  '/my',
+  requireAuth,
+  requireRole(['PATIENT']),
+  therapySessionController.listMyTherapySessions,
+);
+
+router.get(
+  '/my-prescriptions',
+  requireAuth,
+  requireRole(['PATIENT']),
+  therapySessionController.listMyPrescriptions,
+);
+
+router.get(
   '/patient/:patientId',
   requireAuth,
   requireRole(['NAKES']),
