@@ -87,12 +87,15 @@ model NakesProfile {
 }
 
 model TherapyMovement {
-  id          String   @id @default(uuid())
-  namaGerakan String
-  deskripsi   String?
-  instruksi   String   @db.Text
-  mediaUrl    String?  // URL video atau gambar
-  mediaType   String?  // "VIDEO" atau "IMAGE"
+  id            String   @id @default(uuid())
+  namaGerakan   String
+  deskripsi     String?
+  instruksi     String   @db.Text
+  mediaUrl      String?
+  mediaType     String?
+  imageData     Bytes?
+  imageMimeType String?
+  youtubeUrl    String?
 
   prescriptions TherapyPrescription[]
   
@@ -187,4 +190,3 @@ model Consultation {
   @@index([patientId, createdAt])
   @@index([nakesId, status])
 }
-

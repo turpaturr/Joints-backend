@@ -15,7 +15,16 @@ const app: Application = express();
 app.use(helmet());
 app.use(cors());
 app.use(morgan('dev'));
-app.use(express.json());
+const standardJsonParser = express.json();
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (
+    (req.method === 'POST' || req.method === 'PATCH')
+    && req.path === '/api/therapy/movements'
+  ) {
+    return next();
+  }
+  standardJsonParser(req, res, next);
+});
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/health', (_req: Request, res: Response) => {
@@ -32,9 +41,19 @@ app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Not Found' });
 });
 
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
+app.use((err: Error & { status?: number; type?: string }, _req: Request, res: Response, _next: NextFunction) => {
+  const statusCode = err.status === 413 ? 413 : err.status === 400 ? 400 : 500;
+  const code = statusCode === 413
+    ? 'PAYLOAD_TOO_LARGE'
+    : statusCode === 400
+      ? 'INVALID_REQUEST'
+      : 'INTERNAL_SERVER_ERROR';
+  if (statusCode === 500) console.error(err.stack);
+  res.status(statusCode).json({
+    success: false,
+    message: statusCode === 413 ? 'Ukuran request terlalu besar' : statusCode === 400 ? 'Request tidak valid' : 'Terjadi kesalahan internal',
+    error: { code },
+  });
 });
 
 export default app;

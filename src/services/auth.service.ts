@@ -35,12 +35,12 @@ export const registerUser = async (data: z.infer<typeof registerSchema>) => {
 export const loginUser = async (data: z.infer<typeof loginSchema>) => {
   const user = await prisma.user.findUnique({ where: { email: data.email } });
   if (!user) {
-    throw new AuthServiceError('INVALID_CREDENTIALS', 'Kredensial tidak valid');
+    throw new AuthServiceError('INVALID_CREDENTIALS', 'Akun atau password salah');
   }
 
   const isValidPassword = await bcrypt.compare(data.password, user.password);
   if (!isValidPassword) {
-    throw new AuthServiceError('INVALID_CREDENTIALS', 'Kredensial tidak valid');
+    throw new AuthServiceError('INVALID_CREDENTIALS', 'Akun atau password salah');
   }
 
   const canLogin =

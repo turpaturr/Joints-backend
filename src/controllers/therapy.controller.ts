@@ -1,11 +1,43 @@
 import { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 import * as therapyService from '../services/therapy.service';
-import { movementSchema, prescriptionSchema } from '../utils/validations/therapy.validation';
+import {
+  movementSchema,
+  movementUpdateSchema,
+  prescriptionSchema,
+  prescriptionUpdateSchema,
+} from '../utils/validations/therapy.validation';
+
+const getUserId = (req: Request): string | null => {
+  const user = (req as any).user;
+  const userId = user?.userId || user?.id || user?.penggunaId;
+  return typeof userId === 'string' ? userId : null;
+};
+
+const getResourceId = (req: Request, res: Response, param: string): string | null => {
+  const parsed = z.string().uuid().safeParse(req.params[param]);
+  if (!parsed.success) {
+    res.status(400).json({
+      success: false,
+      message: 'ID resource tidak valid',
+      error: { code: 'INVALID_ID' },
+    });
+    return null;
+  }
+  return parsed.data;
+};
 
 export const addMovement = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const validatedData = movementSchema.parse(req.body);
-    const movement = await therapyService.createMovement(validatedData);
+    const validation = movementSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Data gerakan tidak valid",
+        error: { code: "INVALID_MOVEMENT", details: validation.error.issues },
+      });
+    }
+    const movement = await therapyService.createMovement(validation.data);
     res.status(201).json({ success: true, message: "Master gerakan berhasil dibuat", data: movement });
   } catch (error) {
     next(error);
@@ -21,12 +53,69 @@ export const listMovements = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+export const editMovement = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = getResourceId(req, res, 'movementId');
+    if (!id) return;
+    const validation = movementUpdateSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Data gerakan tidak valid',
+        error: { code: 'INVALID_MOVEMENT', details: validation.error.issues },
+      });
+    }
+    const movement = await therapyService.updateMovement(id, validation.data);
+    if (!movement) {
+      return res.status(404).json({
+        success: false,
+        message: 'Gerakan terapi tidak ditemukan',
+        error: { code: 'MOVEMENT_NOT_FOUND' },
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: 'Gerakan terapi berhasil diperbarui',
+      data: movement,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const removeMovement = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = getResourceId(req, res, 'movementId');
+    if (!id) return;
+    const result = await therapyService.deleteMovement(id);
+    if (result === 'NOT_FOUND') {
+      return res.status(404).json({
+        success: false,
+        message: 'Gerakan terapi tidak ditemukan',
+        error: { code: 'MOVEMENT_NOT_FOUND' },
+      });
+    }
+    if (result === 'IN_USE') {
+      return res.status(409).json({
+        success: false,
+        message: 'Gerakan tidak dapat dihapus karena masih digunakan resep terapi',
+        error: { code: 'MOVEMENT_IN_USE' },
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: 'Gerakan terapi berhasil dihapus',
+      data: { id },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const addPrescription = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const validatedData = prescriptionSchema.parse(req.body);
-    const user = (req as any).user;
-    console.log("Isi token JWT:", user);
-    const userId = user?.id || user?.userId || user?.penggunaId;
+    const userId = getUserId(req);
     if (!userId) {
       return res.status(401).json({ 
         success: false, 
@@ -35,8 +124,92 @@ export const addPrescription = async (req: Request, res: Response, next: NextFun
       });
     }
     const prescription = await therapyService.createPrescription(userId, validatedData);
+    if (!prescription) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pasien tidak ditemukan atau bukan pasien yang ditangani',
+        error: { code: 'PATIENT_NOT_FOUND_OR_NOT_ASSIGNED' },
+      });
+    }
     
     res.status(201).json({ success: true, message: "Resep berhasil dibuat", data: prescription });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const editPrescription = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = getResourceId(req, res, 'prescriptionId');
+    if (!id) return;
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ID pengguna tidak ditemukan di token JWT',
+        error: { code: 'INVALID_TOKEN_PAYLOAD' },
+      });
+    }
+    const validation = prescriptionUpdateSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Data resep terapi tidak valid',
+        error: { code: 'INVALID_PRESCRIPTION', details: validation.error.issues },
+      });
+    }
+
+    const result = await therapyService.updatePrescription(userId, id, validation.data);
+    if (result.kind === 'NOT_FOUND') {
+      return res.status(404).json({
+        success: false,
+        message: 'Resep tidak ditemukan atau bukan milik pasien yang ditangani',
+        error: { code: 'PRESCRIPTION_NOT_FOUND' },
+      });
+    }
+    if (result.kind === 'INVALID_DATE_RANGE') {
+      return res.status(400).json({
+        success: false,
+        message: 'Tanggal berakhir harus sama atau setelah tanggal mulai',
+        error: { code: 'INVALID_DATE_RANGE' },
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: 'Resep terapi berhasil diperbarui',
+      data: result.data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const removePrescription = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = getResourceId(req, res, 'prescriptionId');
+    if (!id) return;
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'ID pengguna tidak ditemukan di token JWT',
+        error: { code: 'INVALID_TOKEN_PAYLOAD' },
+      });
+    }
+
+    const result = await therapyService.deletePrescription(userId, id);
+    if (result === 'NOT_FOUND') {
+      return res.status(404).json({
+        success: false,
+        message: 'Resep tidak ditemukan atau bukan milik pasien yang ditangani',
+        error: { code: 'PRESCRIPTION_NOT_FOUND' },
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: 'Resep terapi berhasil dihapus',
+      data: { id },
+    });
   } catch (error) {
     next(error);
   }

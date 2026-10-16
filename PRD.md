@@ -422,6 +422,30 @@ pasien.
 - Authorization harus dilakukan sebelum mengakses data pasien.
 - Controller tidak boleh melakukan query Prisma secara langsung.
 
+### Media Gerakan Terapi
+
+`POST /api/therapy/movements` hanya dapat digunakan oleh Nakes dan mewajibkan
+gambar serta video YouTube untuk setiap gerakan. Client mengirimkan `imageBase64`
+berisi data gambar base64 tanpa data-URI prefix, `imageMimeType` bernilai
+`image/jpeg`, `image/png`, atau `image/webp`, dan `youtubeUrl` berupa tautan video
+YouTube HTTPS. Ukuran gambar maksimum 5 MB dan byte gambar disimpan di PostgreSQL.
+Response gerakan menyertakan `imageBase64`, `imageMimeType`, dan `youtubeUrl` agar
+aplikasi pasien dapat menampilkan kedua media tersebut. Data media lama tetap
+dipertahankan untuk kompatibilitas, tetapi tidak dapat digunakan untuk membuat
+gerakan baru.
+
+Nakes dapat memperbarui sebagian field gerakan melalui
+`PATCH /api/therapy/movements/:movementId`. Jika gambar diperbarui,
+`imageBase64` dan `imageMimeType` wajib dikirim bersama. Gerakan yang sudah
+digunakan oleh resep tidak dapat dihapus (`DELETE /api/therapy/movements/:movementId`)
+dan akan menghasilkan respons konflik.
+
+Resep terapi dapat diperbarui melalui `PATCH /api/therapy/prescriptions/:prescriptionId`
+atau dihapus melalui `DELETE /api/therapy/prescriptions/:prescriptionId`.
+Kedua operasi hanya dapat dilakukan Nakes yang menangani pasien terkait.
+Penghapusan resep melepaskan referensi resep pada sesi terapi yang telah tercatat,
+tanpa menghapus riwayat sesi tersebut.
+
 ### Menghubungkan Pasien dengan Nakes
 
 Pasien yang belum terhubung meminta kode melalui `POST /api/connections/code`.
